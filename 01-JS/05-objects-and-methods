@@ -1,0 +1,268 @@
+/**
+ * JavaScript Objects, Destructuring, and Methods - Interview Prep
+ *
+ * This file covers the most important object-related patterns and built-in helpers
+ * that interviewers expect you to know for modern JavaScript.
+ *
+ * Key concepts:
+ * 1. Destructuring
+ *    - Extract values from objects and arrays with concise syntax.
+ *    - Use defaults, renaming, rest, and nested destructuring.
+ *
+ * 2. Spread and Rest operators
+ *    - Spread (...) expands iterable values or object properties.
+ *    - Rest (...) collects remaining elements into arrays or objects.
+ *    - Useful for cloning, merging, parameter handling, and immutability.
+ *
+ * 3. Array helper methods
+ *    - map, filter, reduce, find, some, every, findIndex
+ *    - flat and flatMap for nested arrays.
+ *
+ * 4. Object helpers and immutability
+ *    - Object.assign, Object.keys, Object.values, Object.entries
+ *    - Object.freeze, Object.seal, structuredClone for copy semantics.
+ *
+ * 5. Shallow vs deep copy
+ *    - Spread/Object.assign create shallow copies.
+ *    - structuredClone creates a true deep clone for nested objects.
+ *
+ * 6. Property descriptors
+ *    - defineProperty controls writable, enumerable, configurable behavior.
+ *
+ * 7. Modern operators
+ *    - Optional chaining (?.) safely accesses nested properties.
+ *    - Nullish coalescing (??) distinguishes null/undefined from other falsy values.
+ *
+ * 8. Getters and setters
+ *    - Use get/set to create computed properties and encapsulate access logic.
+ *
+ * Interview tips:
+ *    - Explain the difference between shallow and deep copy clearly.
+ *    - Show when to use spread vs Object.assign.
+ *    - Describe why ?? is better than || for default values with 0 or ''.
+ *    - Mention how destructuring improves readability and reduces manual property access.
+ */
+
+{
+    // Object destructuring
+
+    const obj = { name: "sai", age: 28, city: "Jangaon"};
+
+    const {name, age} = obj; // Gives us name = "sai" and age = 28
+
+    const {name: n, age: a} = obj; // Gives us n = "sai" and a = 28
+
+    const {name, ...rest} = obj; // name = "sai" and rest = {age: 28, city: "Jangaon"}
+
+    const { state = "Telangana" } = obj; // state = "Telangana" (default value since state is not in obj)
+   
+    /* nested destructuring */
+
+    const gymData = {
+        id: 1,
+        gym: { name: "swamy",
+            plan: {
+                type: "premium",
+                price: 999
+            }
+        }
+    }
+
+    const { gym: { name: gymName, plan: { type }}} = gymData;
+
+    const { score = 0 } = { score: null }; // score = null (default value is not used since score is explicitly set to null)
+    const { score: s = 0} = { score: undefined} // s = 0 (default value is used since score is undefined)
+
+}
+
+{
+    // Array destructuring
+
+    const arr = [1, 2, 3, 4, 5];
+
+    const { 0: first, 3: fourth } = arr; // first = 1 and fourth = 4
+
+    const [a,,,d] = arr; // a = 1 and d = 4
+
+    const [first, ...rest] = arr; // first = 1 and rest = [2, 3, 4, 5]
+
+    const [x = 10, y = 20] = [5]; // x = 5 and y = 20 (default value since second element is undefined)
+
+    let a = 1, b = 2;
+    const [a, b] = [b, a]; // a = 2 and b = 1 (swapping values using destructuring)
+
+    /* nested destructuring */
+
+    const nestedArr = [1, [2, 3], 4];
+
+    const [first, [second, third], fourth] = nestedArr; // first = 1, second = 2, third = 3, fourth = 4
+
+}
+
+{
+    // Spread operator -  spreads elements of an iterable (like array or object) into individual elements
+
+    // 1. Merge / Clone arays and objects using spread operator
+    const a = [1,2];
+    const b = [3,4];
+
+    const mergedArr = [...a, ...b]; // [1,2,3,4]
+
+    const obj1 = { name: "sai", age: 28 };
+    const obj2 = { city: "Jangaon", state: "Telangana" };
+
+    const mergedObj = { ...obj1, ...obj2 }; // { name: "sai", age: 28, city: "Jangaon", state: "Telangana" }
+
+    // 2. Clone + Overwrite properties
+    const clonedArr = [...a]; // [1,2]
+    const clonedObj = { ...obj1 }; // { name: "sai", age: 28 }
+    const updatedObj = { ...obj1, age: 29 }; // { name: "sai", age: 29 }
+
+    // 3. Pass as function argument
+    Math.max(...[1, 5, 3]); // 5
+
+    // 4. String to char arrya
+    console.log(..."hello"); // ['h', 'e', 'l', 'l', 'o']
+}
+
+{
+    // Rest operator - collects multiple elements and condenses them into a single array or object
+
+    // 1. Function parameters
+    function sum(first, ...numbers) {
+        return first + numbers.reduce( (acc, n) => acc + n, 0);
+    }
+    sum(1,2,3,4); //10
+
+    // 2. Array destructuring
+    const arr = [1, 2, 3, 4, 5];
+    const [first, ...rest] = arr; // first = 1 and rest = [2, 3, 4, 5]
+
+    // 3. Object destructuring
+    const obj = { name: "sai", age: 28, city: "Jangaon"};
+    const { name, ...Orest } = obj; // name = "sai" and rest = { age: 28, city: "Jangaon" }
+}
+
+{
+    // Array methods
+
+    const arr = [{name: "sai", id: 1}, {name: "chandan", id: 2}, {name: "yata", id: 3}];
+
+    const names = arr.map( i => i.name ); // ["sai", "chandan", "yata"]
+    const updateArr = arr.map( i => ({...i, id: i.id * 10}) ); // [{name: "sai", id: 10}, {name: "chandan", id: 20}, {name: "yata", id: 30}]
+
+    const filteredArr = arr.filter( i => i.id > 1 ); // [{name: "chandan", id: 2}, {name: "yata", id: 3}]
+
+    const totalId = arr.reduce( (acc, i) => acc + i.id, 0); // 6
+
+    const foundItem = arr.find( i => i.name === "chandan" ); // {name: "chandan", id: 2}
+    const someItem = arr.some( i => i.id === 2 ); // true
+    const everyItem = arr.every( i => i.id > 0 ); // true
+    const index = arr.findIndex( i => i.name === "yata" ); // 2
+
+    // flat and flatMap
+    const nestedArr = [1, [2, 3], [4, [5, 6]]];
+    const flatArr = nestedArr.flat(2); // [1, 2, 3, 4, 5, 6]
+    const flatMappedArr = nestedArr.flatMap( i => Array.isArray(i) ? i : [i] ); // [1, 2, 3, 4, [5, 6]]
+}
+
+{
+    // Object methods
+
+    const obj = { name: "sai", age: 28, city: "Jangaon"};
+
+    const newObj = Object.assign({}, obj, { age: 29 }); // { name: "sai", age: 29, city: "Jangaon" }
+
+    Object.keys(obj); // ["name", "age", "city"]
+    Object.values(obj); // ["sai", 28, "Jangaon"]
+    Object.entries(obj); // [["name", "sai"], ["age", 28], ["city", "Jangaon"]]
+
+    Object.freeze(obj); // makes obj immutable (cannot add, delete, or modify properties)
+    Object.seal(obj); // prevents adding or deleting properties, but allows modifying existing properties
+}
+
+{
+    // Shallow vs Deep copy
+
+    const obj = { name: "sai", add: { place: "JN"} };
+
+    const c1 = {...obj}; 
+    const c2 = Object.assign({}, obj);
+
+    c1.name = "canda"; // obj.name unchanged
+    c2.add.place = "hyd"; // obj.add.place is changed
+
+    sc = structuredClone(obj);
+    sc.add.place = "warangal"; // obj.add.place is unchanged
+
+}
+
+{
+    // Object Descriptors
+    const obj = { name: "sai" };
+
+    Object.defineProperty(obj, "age", {
+        value: 28,
+        writable: false, // cannot modify age
+        enumerable: true, // shows up in for...in and Object.keys()
+        configurable: false // cannot delete or reconfigure age
+    });
+}
+
+{
+    // ?. and ?? operators
+    const obj = { name: "sai", add: { place: "JN"} };
+
+    console.log(obj?.add?.place); // "JN" - safely accesses nested property
+    console.log(obj?.contact?.phone); // undefined - safely returns undefined instead of throwing error
+
+    const value = null;
+    console.log(value ?? "default"); // "default" - returns default since value is null
+
+    const config = { fee: 0, label: '' };
+
+    config.fee   || 999; // 999  ← 0 is falsy, WRONG
+    config.fee   ?? 999; // 0   ← 0 is not null/undefined ✓
+
+    config.label || 'N/A'; // 'N/A' ← '' is falsy, WRONG
+    config.label ?? 'N/A'; // ''   ← '' is valid ✓
+}
+
+{
+    // Getter and Setter
+    const obj = {
+        firstName: "sai",
+        lastName: "chandan",
+        get fullName() {
+            return `${this.firstName} ${this.lastName}`;
+        },
+        set fullName(name) {
+            const [first, last] = name.split(" ");
+            this.firstName = first;
+            this.lastName = last;
+        }
+    }
+
+    console.log(obj.fullName); // "sai chandan" - getter is called
+
+    obj.fullName = "chandan sai"; // setter is called, updates firstName and lastName
+    console.log(obj.firstName); // "chandan"
+    console.log(obj.lastName); // "sai"
+
+    // Private props in classes
+    class Person {
+        #ssn; // private field
+        constructor(name, ssn) {
+            this.name = name;
+            this.#ssn = ssn;
+        }
+        getSSN() {
+            return this.#ssn; // can access private field within class
+        }
+    }
+
+    const p = new Person("sai", "123-45-6789");
+    console.log(p.name); // console.log(p.#ssn); // SyntaxError: Private field '#ssn' must be declared in an enclosing class
+    console.log(p.getSSN()); // "123-45-6789" - can access private field through public method  
+
+}
