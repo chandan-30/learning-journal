@@ -1,0 +1,89 @@
+/* 1. Box Model 
+
+The CSS box model describes the rectangular boxes that are generated for elements in the document tree and laid out according to the visual formatting model. It consists of:
+
+Margin: The layer outside element and adds space between the element and its nieghbouring elements.
+
+Border: It's the border to the element which has its own width and color.
+
+Padding: It's the space around the content area of the element and the border of the element.
+
+Content Area: Where the text and children of the element exists, which has width and height to it.
+
+*/
+
+
+/* 2. Box-Sizing
+
+The box-sizing property is used to alter the default CSS box model used to calculate widths and heights of elements. It has two main values:
+
+content-box: This is the default value. The width and height properties include only the content. Border and padding are not included in the width and height.  
+
+    example: .box {
+                width: 200px;
+                padding: 20px;
+                border: 5px;
+            }
+    Now: In this property, total space occupied by element is 250px;
+
+Border-box: Border and padding are also included inside the content area, it shrinks the content area shrinks making total space occupied to 200px only.
+
+Note: Always use: *, *::before, *::after { box-sizing: border-box; }
+
+*/
+
+/* 3. Margin-Collpase
+    
+    Margin Collapse occurs when the top and bottom margins of block-level elements collapse into a single margin.
+
+    Scenarios where margin collapse occurs:
+
+    1. Between parent and first/last child:
+        - Parent's top margin collapses with first child's top margin
+        - Parent's bottom margin collapses with last child's bottom margin
+        - Only happens when parent has no padding, border, or content
+
+    2. Between adjacent sibling elements:
+        - Bottom margin of one element collapses with top margin of the next element
+        - The larger margin value is used
+
+    3. Empty block elements:
+        - Top and bottom margins collapse into a single margin
+        - Result is the larger of the two margins
+
+    Scenarios where margin collapse DOES NOT occur:
+
+    1. When using flexbox or grid layout
+    2. When element is floated
+    3. When element is positioned absolutely
+    4. When element has overflow property set to something other than visible
+    5. Horizontal margins never collapse
+    6. Margins involving inline or inline-block elements never collapse
+    7. When parent has padding or border
+*/
+
+/* Width and Height values */
+/*
+    auto: Default value. Browser calculates width/height based on content and other properties.
+    
+    <length>: Fixed size (px, em, rem, etc.)
+        example: width: 200px; height: 10rem;
+    
+    <percentage>: Relative to parent element's width/height
+        example: width: 50%; height: 100%;
+    
+    min-content: Smallest size to fit content without overflow
+    
+    max-content: Size needed to fit all content without wrapping
+    
+    fit-content: Shrinks to fit content, but respects min/max constraints
+    
+    vh/vw: Viewport height/width units (1vh = 1% of viewport height)
+        example: width: 100vw; height: 50vh;
+    
+    inherit: Inherits value from parent element
+    
+    initial: Sets to default browser value
+    
+    unset: Removes any set value
+*/
