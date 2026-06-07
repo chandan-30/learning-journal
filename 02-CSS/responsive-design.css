@@ -1,0 +1,268 @@
+/*
+ * ============================================================
+ * RESPONSIVE DESIGN — INTERVIEW PREP GUIDE
+ * ============================================================
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 1. MOBILE-FIRST — min-width VS max-width
+ * ─────────────────────────────────────────────────────────────
+ * Mobile-first means writing base styles for the smallest
+ * screen, then layering overrides upward with min-width
+ * media queries as the viewport grows.
+ *
+ *   -- Mobile-first (PREFERRED)
+ *   .card { font-size: 1rem; padding: 1rem; }          -- base: mobile
+ *   @media (min-width: 768px)  { .card { padding: 2rem; } }   -- tablet+
+ *   @media (min-width: 1200px) { .card { padding: 3rem; } }   -- desktop+
+ *
+ *   -- Desktop-first (avoid)
+ *   .card { padding: 3rem; }
+ *   @media (max-width: 1199px) { .card { padding: 2rem; } }
+ *   @media (max-width: 767px)  { .card { padding: 1rem; } }
+ *
+ * Why min-width wins:
+ *   - Simpler cascade: each breakpoint only ADDS rules,
+ *     never undoes them. Fewer overrides = less specificity debt.
+ *   - Performance: mobile devices (often slower networks)
+ *     download the minimal base CSS and skip unused queries.
+ *   - Forces a content-first mindset: you design for
+ *     constraints first, enhancement second.
+ *   - Aligns with progressive enhancement philosophy.
+ *
+ * max-width media queries are fine for one-off exceptions
+ * ("hide this only on small screens") but shouldn't drive
+ * the entire layout strategy.
+ *
+ * Interview tip: name breakpoints by content need, not device
+ * name. "sm/md/lg" ages better than "phone/tablet/desktop".
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 2. VIEWPORT UNITS — vw, vh, dvh, svh, lvh
+ * ─────────────────────────────────────────────────────────────
+ * Classic units:
+ *   vw  — 1% of the viewport WIDTH
+ *   vh  — 1% of the viewport HEIGHT (the buggy one)
+ *
+ * The iOS address bar problem:
+ *   Mobile browsers show/hide their address bar as you scroll.
+ *   vh is calculated against the MAXIMUM viewport height
+ *   (bar hidden). So on page load with the bar visible,
+ *   100vh overflows by the bar's height — causing that
+ *   infamous scrollable gap at the bottom of full-screen sections.
+ *
+ * Modern viewport units (CSS Values Level 4 — widely supported):
+ *   svh  — Small Viewport Height  — bar VISIBLE (always visible safe)
+ *   lvh  — Large Viewport Height  — bar HIDDEN  (matches old vh)
+ *   dvh  — Dynamic Viewport Height — tracks the ACTUAL current height
+ *           as the bar appears/disappears
+ *
+ *   Equivalent width variants: svw, lvw, dvw
+ *   Shorthand for both axes: svi/lvi/dvi (inline) and svb/lvb/dvb (block)
+ *
+ * Which to use:
+ *   Full-screen hero/splash sections → height: 100svh
+ *     (guaranteed not to overflow, even with bar shown)
+ *   Sticky footers, safe "fill remaining" → height: 100dvh
+ *     (adapts in real-time; can cause layout shift while scrolling)
+ *   Avoid bare 100vh for layout-critical full-screen elements
+ *     on mobile.
+ *
+ *   .hero { min-height: 100svh; }   -- safe mobile full-screen
+ *
+ * Interview tip: dvh is "live" — it causes a repaint each time
+ * the bar toggles. svh is the safer performance choice when you
+ * just need "at least visible-screen-height".
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 3. rem vs em vs px — SEMANTIC RULES
+ * ─────────────────────────────────────────────────────────────
+ *
+ * px — absolute, device-independent pixel
+ *   Ignores user's browser font-size preference.
+ *   Use for: borders (1px), box-shadows, fixed decorative
+ *            dimensions that must never scale.
+ *   Avoid for: font-size, spacing that should respect
+ *              user accessibility settings.
+ *
+ * rem — relative to the ROOT element (<html>) font-size
+ *   Default root font-size = 16px in all browsers.
+ *   Respects user's browser font-size preference.
+ *   Consistent across the whole page (no compounding).
+ *   Use for: font-size, margin, padding, gap, width/max-width —
+ *            anything that should scale with the user's
+ *            text preference globally.
+ *
+ *   html { font-size: 100%; }   -- never set px here; let user win
+ *   p    { font-size: 1rem; }   -- 16px by default, scales if user changes it
+ *
+ * em — relative to the CURRENT element's font-size
+ *   Compounds: a child inside a parent both set to 1.5em
+ *   ends up at 1.5 × 1.5 = 2.25× the root size.
+ *   Use for: padding/margin WITHIN a component that should
+ *            scale proportionally with that component's own
+ *            font-size (e.g. button padding that grows with
+ *            the button's text).
+ *
+ *   .btn { font-size: 1rem; padding: 0.5em 1em; }
+ *   -- padding stays proportional when font-size changes
+ *
+ * Quick decision rule:
+ *   Is it a font-size or global spacing?        → rem
+ *   Is it padding/margin inside a component?    → em
+ *   Is it a hairline, shadow, or decorative?    → px
+ *
+ * Interview tip: setting html { font-size: 62.5% } (so 1rem = 10px)
+ * is a common old trick — mention it but note it breaks
+ * user font-size preferences and is now considered an anti-pattern.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 4. CONTAINER QUERIES — component-level responsiveness
+ * ─────────────────────────────────────────────────────────────
+ * Media queries respond to the VIEWPORT size. This breaks
+ * reusable components: a card in a full-width layout vs
+ * the same card in a sidebar needs different styles, but
+ * the viewport size is identical.
+ *
+ * @container queries respond to the SIZE OF A NAMED ANCESTOR.
+ *
+ * Setup — mark a parent as a containment context:
+ *   .card-wrapper {
+ *     container-type: inline-size;   -- enables width-based queries
+ *     container-name: card;          -- optional name for targeting
+ *   }
+ *
+ * Then query against it from within:
+ *   @container card (min-width: 400px) {
+ *     .card { display: flex; gap: 1rem; }
+ *   }
+ *
+ * container-type values:
+ *   inline-size  — track width only (most common, avoids layout cycles)
+ *   size         — track both width and height
+ *   normal       — default, no containment
+ *
+ * Container query units (cq*):
+ *   cqw  — 1% of container width       cqh  — 1% of container height
+ *   cqi  — 1% of container inline size  cqb  — 1% of container block size
+ *   cqmin / cqmax — smaller/larger of cqi and cqb
+ *
+ *   .card__title { font-size: clamp(1rem, 4cqi, 1.5rem); }
+ *
+ * Why it matters:
+ *   Enables truly portable components that adapt to their
+ *   placement context, not the screen size. Sidebar vs
+ *   main column can now share one component definition.
+ *
+ * Interview tip: container queries do not replace media queries.
+ * Use media queries for page-level layout shifts; use container
+ * queries for component-level adaptation.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 5. clamp() — FLUID TYPOGRAPHY AND SPACING WITHOUT JS
+ * ─────────────────────────────────────────────────────────────
+ * clamp(MIN, PREFERRED, MAX)
+ *   Returns PREFERRED, but never less than MIN or more than MAX.
+ *
+ *   font-size: clamp(1rem, 2.5vw, 2rem);
+ *   -- never smaller than 1rem, never larger than 2rem,
+ *   -- scales smoothly with viewport between those bounds
+ *
+ * The old approach needed breakpoints:
+ *   @media (max-width: 600px) { h1 { font-size: 1.5rem; } }
+ *   @media (min-width: 1200px) { h1 { font-size: 3rem; } }
+ *   -- no smooth transition between
+ *
+ * Fluid formula for PREFERRED value:
+ *   Use a viewport-relative unit (vw) or a calculated value
+ *   to create a slope between two sizes:
+ *
+ *   -- Grows from 1rem at 320px viewport to 2rem at 1200px
+ *   font-size: clamp(1rem, 0.5rem + 2vw, 2rem);
+ *
+ *   Tools like utopia.fyi generate these values from
+ *   min/max font-size and min/max viewport inputs.
+ *
+ * Common uses:
+ *   font-size: clamp(1rem, 4vw, 2.5rem);        -- fluid heading
+ *   padding:   clamp(1rem, 5%, 3rem);            -- fluid section padding
+ *   gap:       clamp(0.75rem, 2vw, 1.5rem);      -- fluid grid gap
+ *   width:     clamp(280px, 90%, 800px);         -- responsive container
+ *
+ * clamp() vs min() / max():
+ *   max(1rem, 2vw)          -- at least 1rem (min-clamp without ceiling)
+ *   min(2rem, 10vw)         -- at most 2rem  (max-clamp without floor)
+ *   clamp(a, b, c) === max(a, min(b, c))
+ *
+ * Interview tip: the PREFERRED value in clamp() should use a
+ * relative or viewport unit — using a fixed px value makes
+ * it just a fancy way to write a constant.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 6. RESPONSIVE IMAGES
+ * ─────────────────────────────────────────────────────────────
+ *
+ * srcset — let the browser pick the right resolution
+ *   Provide multiple image files; browser chooses based on
+ *   device pixel ratio (DPR) and viewport width.
+ *
+ *   -- Descriptor x: by pixel density
+ *   <img src="img.jpg"
+ *        srcset="img@2x.jpg 2x, img@3x.jpg 3x"
+ *        alt="...">
+ *
+ *   -- Descriptor w: by pixel width (used with sizes)
+ *   <img src="img-800.jpg"
+ *        srcset="img-400.jpg 400w, img-800.jpg 800w, img-1600.jpg 1600w"
+ *        sizes="..."
+ *        alt="...">
+ *
+ * sizes — tell the browser how wide the image will render
+ *   Without sizes, the browser assumes the image is 100vw,
+ *   causing it to download a far-too-large file for column layouts.
+ *
+ *   sizes="(max-width: 600px) 100vw,
+ *          (max-width: 1200px) 50vw,
+ *          33vw"
+ *   -- "on small screens: full width; on medium: half; else: a third"
+ *   -- browser picks the srcset candidate that best fits this slot
+ *
+ * object-fit — controls how an <img> fills its box (like background-size)
+ *   contain   — fit whole image inside box, may letterbox
+ *   cover     — fill box, crop excess (most common for cards/heroes)
+ *   fill      — stretch to box dimensions (distorts)
+ *   none      — natural size, may overflow
+ *   scale-down — smaller of none or contain
+ *
+ *   .card__img { width: 100%; height: 200px; object-fit: cover; }
+ *
+ * object-position — like background-position for <img>
+ *   object-position: center top;   -- keep top of image visible when cropped
+ *
+ * aspect-ratio — reserve space before the image loads (avoids CLS)
+ *   .card__img { aspect-ratio: 16 / 9; width: 100%; object-fit: cover; }
+ *   .avatar    { aspect-ratio: 1;       width: 3rem;  object-fit: cover; }
+ *
+ *   Can also be applied to non-image elements:
+ *   .video-embed { aspect-ratio: 16 / 9; width: 100%; }
+ *
+ * <picture> element — art direction (different crops per breakpoint)
+ *   <picture>
+ *     <source media="(max-width: 600px)" srcset="img-portrait.jpg">
+ *     <source media="(min-width: 601px)" srcset="img-landscape.jpg">
+ *     <img src="img-landscape.jpg" alt="...">
+ *   </picture>
+ *   -- srcset/sizes = same image, different sizes
+ *   -- <picture> = different images, different art direction
+ *
+ * Interview tip: CLS (Cumulative Layout Shift) is a Core Web
+ * Vital. Always set aspect-ratio (or explicit width+height
+ * attributes) on images so the browser reserves space before
+ * the file loads — no jarring layout jump.
+ *
+ * ============================================================
+ */

@@ -1,0 +1,183 @@
+/*
+ * ============================================================
+ * CSS CASCADE, SPECIFICITY & INHERITANCE — INTERVIEW PREP GUIDE
+ * ============================================================
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 1. THE CASCADE — HOW BROWSERS DECIDE WHICH RULE WINS
+ * ─────────────────────────────────────────────────────────────
+ * The cascade is the algorithm that resolves conflicts when
+ * multiple CSS rules target the same element and property.
+ * It evaluates rules in this priority order (highest first):
+ *
+ *   a) ORIGIN & IMPORTANCE
+ *      1. User-agent !important   (browser defaults forced)
+ *      2. User !important         (accessibility overrides)
+ *      3. Author !important       (your stylesheet, forced)
+ *      4. Author normal           (your stylesheet, normal) ← most common
+ *      5. User normal             (user preferences)
+ *      6. User-agent normal       (browser defaults)
+ *
+ *      Origin order flips when !important is involved:
+ *      user-agent !important beats author !important.
+ *
+ *   b) SPECIFICITY
+ *      If origin is equal, the more specific selector wins.
+ *      (See section 2.)
+ *
+ *   c) ORDER OF APPEARANCE (Source Order)
+ *      If specificity is also equal, the rule that appears
+ *      LATER in the CSS wins. This is why utility classes
+ *      placed at the end of a stylesheet reliably override
+ *      component styles.
+ *
+ * Interview tip: "cascade" ≠ "specificity" — cascade is the
+ * full algorithm; specificity is just one step within it.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 2. SPECIFICITY SCORING
+ * ─────────────────────────────────────────────────────────────
+ * Think of specificity as a 3-column score: (A, B, C)
+ *
+ *   A = number of ID selectors           (#id)
+ *   B = number of class / attribute /
+ *       pseudo-class selectors           (.class, [attr], :hover)
+ *   C = number of type / pseudo-element
+ *       selectors                        (div, p, ::before)
+ *
+ * Inline styles beat all selector-based rules (treated as
+ * (1,0,0,0) in an extended 4-column model).
+ * The universal selector * and combinators (+, >, ~, " ")
+ * contribute 0 to specificity.
+ *
+ * Ranking (highest → lowest):
+ *   inline style  >  ID  >  class/attr/pseudo-class  >  type/pseudo-element
+ *
+ * Calculating examples:
+ *   Selector                        A  B  C   Score
+ *   ─────────────────────────────── ── ── ──  ──────
+ *   p                               0  0  1   (0,0,1)
+ *   .card                           0  1  0   (0,1,0)
+ *   #header                         1  0  0   (1,0,0)
+ *   div.card                        0  1  1   (0,1,1)
+ *   #nav .item:hover                1  2  0   (1,2,0)
+ *   style=""  (inline)              —  —  —   beats all above
+ *
+ * Comparison is left-to-right — (1,0,0) beats (0,99,99).
+ * You CANNOT "add up" across columns to win.
+ *
+ * Interview tip: :is() and :not() take the specificity of
+ * their MOST SPECIFIC argument. :where() always scores (0,0,0).
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 3. !important
+ * ─────────────────────────────────────────────────────────────
+ * Adding !important after a value promotes that declaration to
+ * the "author !important" origin layer, beating all normal
+ * author rules regardless of specificity.
+ *
+ *   color: red !important;
+ *
+ * WHEN IT'S JUSTIFIED:
+ *   - Utility / helper classes that must always apply
+ *     (.hidden { display: none !important; })
+ *   - Third-party stylesheet overrides you cannot touch
+ *   - Accessibility overrides (user stylesheets, forced colors)
+ *
+ * RED FLAGS (avoid these):
+ *   - Using it to "fix" a specificity battle — the real fix
+ *     is to restructure the selector or the HTML.
+ *   - Chains of !important fighting each other (specificity
+ *     still applies within !important declarations, so this
+ *     escalates into an arms race).
+ *   - Inside component styles — breaks the cascade contract
+ *     for anyone composing with that component.
+ *
+ * Interview tip: if you find yourself writing !important to
+ * make something work, treat it as a signal that the
+ * architecture needs review, not a solution.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 4. INHERITED vs NON-INHERITED PROPERTIES
+ * ─────────────────────────────────────────────────────────────
+ * Inheritance lets child elements automatically receive
+ * certain computed values from their parent without
+ * explicit declaration.
+ *
+ * INHERITED by default (typography & text-related):
+ *   color, font-family, font-size, font-weight, font-style,
+ *   line-height, letter-spacing, text-align, text-transform,
+ *   text-indent, visibility, cursor, list-style-*
+ *
+ * NOT inherited by default (box/layout/decoration):
+ *   margin, padding, border, width, height,
+ *   background-*, display, position, top/right/bottom/left,
+ *   overflow, box-shadow, transform, opacity, z-index,
+ *   flex/grid properties
+ *
+ * Controlling inheritance explicitly:
+ *   inherit   — force the child to use the parent's value
+ *   initial   — reset to the browser default for that property
+ *   unset     — behaves as inherit if the property inherits
+ *               naturally, otherwise as initial
+ *   revert    — rolls back to the user-agent stylesheet value
+ *
+ *   all: unset;   — applies unset to every property at once
+ *                   (useful for resetting a component)
+ *
+ * Interview tip: "why isn't my color applying?" is often
+ * answered by checking whether the property inherits and
+ * whether a closer ancestor is overriding it.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 5. MODERN PSEUDO-CLASS SELECTORS
+ * ─────────────────────────────────────────────────────────────
+ *
+ * :is()
+ *   Matches any element that matches ONE of the listed
+ *   selectors. Forgiving — invalid selectors are silently
+ *   ignored instead of breaking the whole rule.
+ *   Specificity: that of its MOST SPECIFIC argument.
+ *
+ *   Before:  h1 a, h2 a, h3 a { color: blue; }
+ *   After:   :is(h1, h2, h3) a { color: blue; }
+ *
+ * :where()
+ *   Identical to :is() but ALWAYS has 0 specificity.
+ *   Ideal for base/reset styles that should be easy to override.
+ *
+ *   :where(h1, h2, h3) a { color: blue; }   -- specificity (0,0,1) not (1,0,1)
+ *
+ * :not()
+ *   Matches elements that do NOT match the argument.
+ *   Forgiving like :is(). Specificity = most specific argument.
+ *
+ *   a:not(.active) { opacity: 0.6; }
+ *   input:not([type="submit"], [type="reset"]) { border: 1px solid; }
+ *
+ * :has()
+ *   "Parent selector" — matches an element IF it contains
+ *   a descendant matching the argument. Finally lets CSS
+ *   select parents or preceding siblings based on children.
+ *   Specificity: that of its most specific argument.
+ *
+ *   -- Card that contains an image gets a different layout
+ *   .card:has(img) { display: grid; grid-template-columns: 1fr 2fr; }
+ *
+ *   -- Label before a required input
+ *   label:has(+ input:required)::after { content: " *"; color: red; }
+ *
+ * Quick comparison:
+ *   Selector    Forgiving   Specificity      Primary use
+ *   ──────────  ─────────   ───────────      ──────────────────────────
+ *   :is()       yes         highest arg      DRY selector grouping
+ *   :where()    yes         always 0         low-weight base styles
+ *   :not()      yes         highest arg      exclusion filtering
+ *   :has()      yes         highest arg      parent/relational targeting
+ *
+ * ============================================================
+ */

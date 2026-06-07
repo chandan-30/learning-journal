@@ -1,0 +1,311 @@
+/*
+ * ============================================================
+ * VISUAL STYLING & ANIMATION — INTERVIEW PREP GUIDE
+ * ============================================================
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 1. CSS CUSTOM PROPERTIES (CSS Variables)
+ * ─────────────────────────────────────────────────────────────
+ * Custom properties are live, inheritable values defined with
+ * a -- prefix and read with var().
+ *
+ * Defining & using:
+ *   :root {
+ *     --color-primary: #0066cc;
+ *     --spacing-md: 1rem;
+ *   }
+ *   .btn { background: var(--color-primary); padding: var(--spacing-md); }
+ *
+ * Fallback value (second arg to var()):
+ *   color: var(--color-accent, hotpink);
+ *   -- if --color-accent is not defined, hotpink is used
+ *
+ * INHERITANCE — custom properties inherit like color/font-size.
+ *   Declaring on :root makes them globally available.
+ *   Overriding on a child scopes the new value to that subtree:
+ *
+ *   .card--dark { --color-primary: #aad4ff; }
+ *   -- all children of .card--dark now see the new value
+ *
+ * DYNAMIC THEMING pattern:
+ *   Define semantic tokens on :root, swap them per theme.
+ *
+ *   :root {
+ *     --bg: #ffffff;
+ *     --text: #111111;
+ *   }
+ *   [data-theme="dark"] {
+ *     --bg: #111111;
+ *     --text: #f0f0f0;
+ *   }
+ *   body { background: var(--bg); color: var(--text); }
+ *
+ *   Toggle with JS: document.documentElement.dataset.theme = 'dark'
+ *   -- one JS line, zero property rewrites across the stylesheet
+ *
+ * Custom properties vs preprocessor variables (Sass $var):
+ *   - CSS custom properties are LIVE at runtime, can be
+ *     changed by JS, and respect the cascade/inheritance.
+ *   - Sass variables are compiled away — static, no runtime access.
+ *   Use custom properties for anything theme-related or dynamic.
+ *   Sass variables are fine for build-time constants (breakpoints).
+ *
+ * Interview tip: custom properties can hold any value — numbers,
+ * strings, even partial values used in calc():
+ *   --ratio: 1.5;
+ *   line-height: var(--ratio);       -- valid
+ *   font-size: calc(var(--base) * var(--ratio));  -- valid
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 2. TRANSITIONS
+ * ─────────────────────────────────────────────────────────────
+ * Transitions animate a property change between two states
+ * (e.g., :hover → default). They are triggered by state changes,
+ * not driven by keyframes.
+ *
+ * Longhand properties:
+ *   transition-property   -- which property to animate (or "all")
+ *   transition-duration   -- how long the transition takes (s or ms)
+ *   transition-timing-function -- the easing curve
+ *   transition-delay      -- wait before starting
+ *
+ * Shorthand:
+ *   transition: <property> <duration> <timing-fn> <delay>;
+ *   transition: color 200ms ease, transform 300ms ease-out;
+ *   -- comma-separate multiple transitions
+ *
+ * Avoid transition: all — it catches unexpected properties
+ * (e.g., display, height: auto) and causes performance issues.
+ * Enumerate only what you need.
+ *
+ * Timing functions:
+ *   ease         -- slow start, fast middle, slow end (default)
+ *   ease-in      -- slow start, fast end (entering elements)
+ *   ease-out     -- fast start, slow end (exiting elements, most natural)
+ *   ease-in-out  -- slow at both ends
+ *   linear       -- constant speed (progress bars, spinners)
+ *   cubic-bezier(x1, y1, x2, y2) -- custom curve
+ *   steps(n, start|end)           -- discrete jumps (sprites, countdowns)
+ *
+ * will-change — hints to the browser to promote the element
+ *   to its own compositor layer BEFORE the animation starts:
+ *
+ *   .menu { will-change: transform; }
+ *
+ *   Benefits: eliminates the first-frame jank of layer promotion.
+ *   Cost: each layer consumes GPU memory.
+ *   Rules:
+ *     - Apply it sparingly on elements you KNOW will animate.
+ *     - Remove it after the animation ends (via JS) if the
+ *       element doesn't animate frequently.
+ *     - Never apply to :root or large swaths of the DOM.
+ *     - Prefer it over translateZ(0) / translate3d(0,0,0) hacks.
+ *
+ * Interview tip: transitions cannot animate to/from height: auto
+ * or display: none. Common workarounds: max-height trick for
+ * height, opacity + visibility for display.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 3. KEYFRAME ANIMATIONS
+ * ─────────────────────────────────────────────────────────────
+ * @keyframes defines a named animation sequence with explicit
+ * intermediate steps. Unlike transitions, they run automatically
+ * without a state trigger and can loop.
+ *
+ * Defining keyframes:
+ *   @keyframes slide-in {
+ *     from { transform: translateX(-100%); opacity: 0; }
+ *     to   { transform: translateX(0);     opacity: 1; }
+ *   }
+ *
+ *   @keyframes pulse {
+ *     0%   { transform: scale(1);    }
+ *     50%  { transform: scale(1.05); }
+ *     100% { transform: scale(1);    }
+ *   }
+ *
+ * animation shorthand (order matters):
+ *   animation: <name> <duration> <timing-fn> <delay>
+ *              <iteration-count> <direction> <fill-mode> <play-state>;
+ *
+ *   .modal { animation: slide-in 300ms ease-out both; }
+ *
+ * Key sub-properties:
+ *   animation-iteration-count  -- number or infinite
+ *   animation-direction        -- normal | reverse | alternate | alternate-reverse
+ *   animation-play-state       -- running | paused  (togglable via JS)
+ *
+ * fill-mode — what happens OUTSIDE the active duration:
+ *   none      -- element reverts to original styles (default)
+ *   forwards  -- element KEEPS the final keyframe styles after the
+ *                animation ends (most commonly needed)
+ *   backwards -- element applies the FIRST keyframe styles during
+ *                the delay period before the animation starts
+ *   both      -- applies both forwards and backwards rules
+ *
+ *   Without fill-mode: forwards, a fade-in animation snaps
+ *   back to opacity: 0 the moment it ends.
+ *
+ * Interview tip: animation-fill-mode: both is the safe default
+ * when using delays — it prevents the element from flashing
+ * its un-animated state before the animation begins.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 4. TRANSFORM — AND WHY IT'S GPU-ACCELERATED
+ * ─────────────────────────────────────────────────────────────
+ * transform applies 2D or 3D visual modifications WITHOUT
+ * affecting the document flow (the element keeps its original
+ * space in the layout).
+ *
+ * Functions:
+ *   translate(x, y)     translateX(x)    translateY(y)   translateZ(z)
+ *   translate3d(x,y,z)
+ *   scale(x, y)         scaleX(x)        scaleY(y)
+ *   rotate(angle)       rotateX(a)       rotateY(a)      rotateZ(a)
+ *   skew(x, y)          skewX(x)         skewY(y)
+ *   matrix(...)         perspective(d)
+ *
+ * Multiple transforms in one rule (applied right-to-left):
+ *   transform: translateX(50px) rotate(45deg) scale(1.2);
+ *   -- order matters: translate then rotate ≠ rotate then translate
+ *
+ * Why transform is GPU-accelerated:
+ *   The browser rendering pipeline has three main stages:
+ *     1. Layout   — calculate positions and sizes (expensive)
+ *     2. Paint    — fill pixels (moderately expensive)
+ *     3. Composite — combine layers on the GPU (cheap)
+ *
+ *   Animating top/left/width/height triggers LAYOUT + PAINT + COMPOSITE.
+ *   Animating transform and opacity ONLY triggers COMPOSITE —
+ *   the GPU handles it entirely, the main thread stays free.
+ *
+ *   This is why: always animate transform (for movement/scale)
+ *   and opacity (for fades) — never animate top/left for motion.
+ *
+ *   transform-origin — pivot point for rotation and scale:
+ *   transform-origin: center center;   -- default
+ *   transform-origin: top left;        -- rotate from corner
+ *   transform-origin: 50% 100%;        -- rotate from bottom center
+ *
+ *   Individual transform properties (newer, more composable):
+ *   translate: 50px 0;    -- same as transform: translateX(50px)
+ *   rotate: 45deg;        -- independent from other transforms
+ *   scale: 1.2;           -- can be set/transitioned individually
+ *
+ * Interview tip: translate(50%, 50%) uses the element's OWN
+ * dimensions as the percentage reference. This is how the
+ * classic centering trick works:
+ *   position: absolute; top: 50%; left: 50%;
+ *   transform: translate(-50%, -50%);
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 5. prefers-reduced-motion — ANIMATION ACCESSIBILITY
+ * ─────────────────────────────────────────────────────────────
+ * Some users set "Reduce Motion" in their OS accessibility
+ * settings (vestibular disorders, epilepsy, personal preference).
+ * prefers-reduced-motion media query detects this preference.
+ *
+ *   @media (prefers-reduced-motion: reduce) {
+ *     -- strategy A: remove all motion entirely
+ *     *, *::before, *::after {
+ *       animation-duration: 0.01ms !important;
+ *       animation-iteration-count: 1 !important;
+ *       transition-duration: 0.01ms !important;
+ *     }
+ *   }
+ *
+ * Preferred pattern — mobile-first for motion (no-preference default):
+ *   .spinner { animation: spin 1s linear infinite; }
+ *
+ *   @media (prefers-reduced-motion: reduce) {
+ *     .spinner { animation: none; }
+ *     -- or replace with a static indicator
+ *   }
+ *
+ * Even better — apply motion only when explicitly allowed:
+ *   @media (prefers-reduced-motion: no-preference) {
+ *     .hero { animation: fade-in 600ms ease both; }
+ *   }
+ *   -- elements are static by default; motion is an enhancement
+ *
+ * What to reduce vs what to keep:
+ *   REDUCE: large translations, spinning, parallax, auto-playing
+ *           carousels, flashing/strobing effects.
+ *   KEEP:   opacity fades, color transitions, very short/subtle
+ *           transforms — these are generally safe.
+ *   WCAG 2.3.3 (AAA): provide a way to pause/stop motion
+ *   that lasts more than 5 seconds.
+ *
+ * Interview tip: the !important nuclear reset (strategy A above)
+ * is a safety net for third-party components you don't control.
+ * For your own code, prefer wrapping in no-preference so the
+ * base state is always motion-free.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 6. DARK MODE — prefers-color-scheme + data-theme PATTERN
+ * ─────────────────────────────────────────────────────────────
+ *
+ * prefers-color-scheme — detects OS/browser dark mode setting:
+ *   light  — user prefers light
+ *   dark   — user prefers dark
+ *
+ * Pure CSS approach (no JS, no toggle):
+ *   :root {
+ *     --bg:   #ffffff;
+ *     --text: #111111;
+ *   }
+ *   @media (prefers-color-scheme: dark) {
+ *     :root {
+ *       --bg:   #111111;
+ *       --text: #f0f0f0;
+ *     }
+ *   }
+ *   body { background: var(--bg); color: var(--text); }
+ *
+ * data-theme attribute pattern (with user toggle override):
+ *   :root,
+ *   [data-theme="light"] { --bg: #ffffff; --text: #111111; }
+ *   [data-theme="dark"]  { --bg: #111111; --text: #f0f0f0; }
+ *
+ *   -- Respect OS preference as default:
+ *   @media (prefers-color-scheme: dark) {
+ *     :root:not([data-theme]) { --bg: #111111; --text: #f0f0f0; }
+ *   }
+ *
+ *   JS toggle: document.documentElement.dataset.theme = 'dark'
+ *   JS persist: localStorage.setItem('theme', 'dark')
+ *   JS restore: document.documentElement.dataset.theme =
+ *               localStorage.getItem('theme') ?? 'auto'
+ *
+ * Why this pattern wins:
+ *   - Single JS attribute change cascades to every token.
+ *   - No class toggling on individual elements.
+ *   - Works with SSR — set data-theme from a cookie before
+ *     first paint to avoid flash of wrong theme (FOWT).
+ *   - Can scope themes to sub-components:
+ *     <aside data-theme="dark"> -- force dark sidebar only
+ *
+ * color-scheme property — tells the browser which native UI
+ * controls (scrollbars, inputs, select) to render in dark/light:
+ *   :root { color-scheme: light dark; }
+ *   -- or: meta name="color-scheme" content="light dark"
+ *   Without this, form controls and scrollbars stay light
+ *   even when your page is dark.
+ *
+ * Token naming — semantic over literal:
+ *   --color-surface  not  --color-white
+ *   --color-text     not  --color-black
+ *   -- literal names break when you flip the theme
+ *
+ * Interview tip: the FOWT (Flash of Wrong Theme) is a classic
+ * SSR interview topic. The fix is setting data-theme in a
+ * blocking <script> in <head> (before React/Vue hydrates)
+ * so the correct theme is applied before first paint.
+ *
+ * ============================================================
+ */

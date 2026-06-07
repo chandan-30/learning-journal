@@ -1,0 +1,260 @@
+/*
+ * ============================================================
+ * CSS ARCHITECTURE — INTERVIEW PREP GUIDE
+ * ============================================================
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 1. BEM — BLOCK, ELEMENT, MODIFIER
+ * ─────────────────────────────────────────────────────────────
+ * BEM is a naming convention that makes the relationship between
+ * HTML and CSS explicit, self-documenting, and low-specificity.
+ *
+ * Syntax:
+ *   .block                  -- standalone component
+ *   .block__element         -- part that belongs to the block
+ *   .block--modifier        -- variation of block or element
+ *   .block__element--modifier
+ *
+ * Rules:
+ *   - Block: a self-contained, reusable UI piece. Can live
+ *     anywhere on the page. Never depends on its surroundings.
+ *     .card, .nav, .btn, .modal
+ *
+ *   - Element: a child that ONLY makes sense inside the block.
+ *     Double underscore. Cannot exist without the parent block.
+ *     .card__title, .card__image, .nav__item, .modal__overlay
+ *
+ *   - Modifier: a flag that changes appearance, state, or behavior.
+ *     Double hyphen. Applied alongside the base class, not instead.
+ *     .btn--primary, .btn--large, .card--featured, .nav__item--active
+ *
+ * HTML usage:
+ *   <div class="card card--featured">
+ *     <img  class="card__image">
+ *     <h2   class="card__title">...</h2>
+ *     <a    class="btn btn--primary">Read more</a>
+ *   </div>
+ *
+ * Why it works:
+ *   - Every class is a flat (0,1,0) selector — no specificity wars.
+ *   - Class names are self-describing: .card__title tells you
+ *     it's the title part of a card without reading HTML.
+ *   - Modifiers are additive, not overriding, so base styles
+ *     stay intact and predictable.
+ *
+ * Common mistakes:
+ *   .card__header__title  -- NO: elements do not chain.
+ *                         -- Fix: .card__title (flatten the tree)
+ *   .card--featured .card__title { ... }  -- avoid: nesting adds specificity
+ *
+ * BEM in component frameworks:
+ *   With CSS Modules or scoped styles, BEM's namespace prefix
+ *   (the block name) becomes redundant — the module boundary
+ *   provides isolation. You might keep __element naming but
+ *   drop the block prefix.
+ *
+ * Interview tip: BEM's real value is not the syntax — it's the
+ * discipline of thinking in isolated components with explicit
+ * relationships. Interviewers want to hear that.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 2. UTILITY-FIRST CSS — THE TAILWIND MENTAL MODEL
+ * ─────────────────────────────────────────────────────────────
+ * Utility-first means composing styles from single-purpose,
+ * atomic classes directly in HTML instead of writing custom
+ * CSS per component.
+ *
+ *   <div class="flex gap-4 p-6 bg-white rounded-xl shadow-md">
+ *     <h2 class="text-xl font-bold text-gray-900">Title</h2>
+ *   </div>
+ *
+ * The mental model shift:
+ *   Traditional:  write a class, give it a name, write CSS for it
+ *   Utility-first: style is the markup — no context switching,
+ *                  no naming decision, no CSS file growth
+ *
+ * What it trades off:
+ *
+ *   GAINS:
+ *   - Zero dead CSS: Tailwind's build step purges unused classes,
+ *     so production CSS is tiny regardless of how large the
+ *     design system grows.
+ *   - No specificity conflicts: every class is a single
+ *     utility — no cascade battles.
+ *   - Co-location: design intent lives next to markup.
+ *     Deleting a component deletes its styles automatically.
+ *   - Consistent design tokens: spacing, colors, and type
+ *     scales come from a config — no magic numbers scattered
+ *     in stylesheets.
+ *   - Very fast iteration: no round-tripping between HTML and CSS.
+ *
+ *   COSTS:
+ *   - Verbose HTML: long class strings are harder to scan and
+ *     review in diffs.
+ *   - Abstraction leak: business logic ("this is a card") is
+ *     not visible in the markup — it's just visual utilities.
+ *   - Duplication without components: the same set of 8 classes
+ *     on every button is repetitive if you're not using a
+ *     component system (React/Vue) to abstract it.
+ *   - Learning curve: you need to memorize or look up the
+ *     utility vocabulary before being productive.
+ *   - Constraint: stepping outside the design system config
+ *     requires arbitrary value syntax [p-[17px]] — an escape hatch
+ *     that can accumulate inconsistency.
+ *
+ * Tailwind vs BEM is NOT a debate about correctness.
+ * Component-based apps (React, Vue, Svelte) absorb Tailwind's
+ * verbosity via component abstraction. Server-rendered or
+ * multi-page apps with no components benefit more from BEM or
+ * CSS Modules.
+ *
+ * Interview tip: the real question is "where does the abstraction
+ * live?" — BEM/SCSS puts it in CSS class names, Tailwind puts
+ * it in framework components, CSS Modules puts it in the module
+ * boundary. All are valid; the best choice depends on the stack.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 3. CSS MODULES
+ * ─────────────────────────────────────────────────────────────
+ * CSS Modules are a build-tool feature (Webpack, Vite, Next.js)
+ * that transform class names into unique, scoped identifiers at
+ * compile time, preventing style leakage between components.
+ *
+ * How it works:
+ *   1. You write normal CSS in a .module.css file.
+ *   2. The bundler hashes every class name:
+ *      .title → .Card_title__a7f3b
+ *   3. The JS import gives you an object mapping original names
+ *      to hashed names.
+ *   4. Apply them in JSX/templates via the object:
+ *
+ *   -- Card.module.css
+ *   .card  { border: 1px solid #eee; }
+ *   .title { font-size: 1.25rem; }
+ *
+ *   -- Card.jsx
+ *   import styles from './Card.module.css';
+ *   <div className={styles.card}>
+ *     <h2 className={styles.title}>...</h2>
+ *   </div>
+ *
+ *   -- Output HTML (simplified)
+ *   <div class="Card_card__x1y2">
+ *     <h2 class="Card_title__a7f3b">...</h2>
+ *   </div>
+ *
+ * Scoping guarantees: two components can both define .title
+ * with no conflict — the bundler makes them unique.
+ *
+ * composes — CSS Modules' inheritance mechanism:
+ *   .base { padding: 1rem; border-radius: 0.5rem; }
+ *
+ *   .btn-primary {
+ *     composes: base;               -- inherits base styles
+ *     background: var(--color-primary);
+ *   }
+ *
+ *   The element gets BOTH hashed classes applied in the output:
+ *   class="Card_base__abc Card_btn-primary__def"
+ *   -- no duplication of declarations in the CSS output
+ *
+ *   composes across files:
+ *   .btn-primary {
+ *     composes: base from './shared.module.css';
+ *     background: blue;
+ *   }
+ *
+ * :global() — opt out of scoping for third-party or global styles:
+ *   :global(.active) { color: green; }   -- not hashed
+ *   :global { ... }                       -- entire block unscoped
+ *
+ * What bundlers do:
+ *   - Vite / webpack: hashes at build time; CSS extracted to a
+ *     static file in production, injected via <style> in dev.
+ *   - Next.js: built-in support, zero config, also supports
+ *     CSS-in-JS and global stylesheets alongside modules.
+ *   - Dead-code elimination: unused .module.css files or
+ *     individual classes not referenced in JS can be tree-shaken.
+ *
+ * Interview tip: CSS Modules give you BEM-level isolation without
+ * BEM's naming discipline. The tradeoff is build tool dependency —
+ * you can't use them in a plain HTML+CSS project.
+ *
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 4. ACCESSIBLE CSS — FOCUS STYLES & OUTLINES
+ * ─────────────────────────────────────────────────────────────
+ * Focus styles are the visible ring shown on an element when
+ * it receives keyboard focus. They are the primary navigation
+ * indicator for keyboard users, screen-reader users, and
+ * anyone who cannot use a pointer device.
+ *
+ * NEVER DO THIS:
+ *   *:focus { outline: none; }   -- removes keyboard navigation entirely
+ *   a:focus { outline: 0; }      -- WCAG 2.4.7 failure (Level AA)
+ *
+ * The problem outline: none "solved":
+ *   The default browser focus ring appeared on elements clicked
+ *   with a mouse, which many designers found ugly. The wrong fix
+ *   was removing it globally. The right fix is :focus-visible.
+ *
+ * :focus-visible — the correct modern solution:
+ *   Applies only when the browser determines focus should be
+ *   VISIBLE — i.e., keyboard navigation or programmatic focus,
+ *   NOT mouse clicks.
+ *
+ *   .btn:focus          { outline: none; }        -- suppress all focus
+ *   .btn:focus-visible  { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+ *   -- mouse clicks: no ring. Tab navigation: ring appears.
+ *
+ *   Simpler — let the browser decide when to show it:
+ *   :focus-visible {
+ *     outline: 2px solid #005fcc;
+ *     outline-offset: 3px;
+ *   }
+ *   :focus:not(:focus-visible) { outline: none; }  -- hide on pointer focus
+ *
+ * Designing good focus styles:
+ *   - Use outline, not border — outline does not affect layout.
+ *   - outline-offset adds breathing room between the element
+ *     and the ring without changing box size.
+ *   - Minimum contrast ratio: 3:1 against adjacent color (WCAG 2.4.11).
+ *   - Do not rely on color alone — use outline-width >= 2px.
+ *   - On dark backgrounds the default blue ring may disappear:
+ *     use box-shadow as a supplement or replace with a custom color.
+ *
+ *   Good custom focus style:
+ *   :focus-visible {
+ *     outline: 2px solid #005fcc;
+ *     outline-offset: 2px;
+ *     border-radius: 2px;
+ *   }
+ *
+ *   High-contrast mode safe (Windows forced colors):
+ *   :focus-visible {
+ *     outline: 2px solid transparent;   -- color replaced by system
+ *     outline-offset: 2px;              -- but dimensions preserved
+ *   }
+ *
+ * Focus management beyond styling:
+ *   - tabindex="0"  : make a non-interactive element focusable
+ *   - tabindex="-1" : focusable via JS only (focus() call),
+ *                     not in the tab order
+ *   - Modals: move focus INTO the modal on open, trap it inside,
+ *     restore focus to the trigger on close.
+ *
+ * WCAG references:
+ *   2.4.7  (AA)  — Focus Visible: any focusable UI must show a visible indicator.
+ *   2.4.11 (AA)  — Focus Appearance (2.2): minimum area and contrast for ring.
+ *   2.1.1  (A)   — Keyboard: all functionality operable by keyboard.
+ *
+ * Interview tip: ":focus-visible vs :focus" is a very common
+ * accessibility interview question. The one-line answer: :focus
+ * fires on every focus event; :focus-visible fires only when
+ * the browser determines a visible indicator is needed (keyboard
+ * or programmatic focus, not pointer clicks).
+ *
+ * ============================================================
+ */

@@ -1,0 +1,117 @@
+/* Normal flow
+
+    Block-level elements (e.g., <div>, <p>) stack vertically, one after the other, taking up the full width of their container.
+    - Can have margins, padding, and borders that affect their size and spacing.
+    - Can have width and height properties that define their dimensions.
+    - Can contain other block-level or inline elements.
+
+    Inline elements (e.g., <span>, <a>) flow horizontally, one after the other, taking up only as much width as necessary.
+    - Cannot have width and height properties that affect their dimensions.
+    - Cannot have margins that affect their spacing, but can have padding and borders that affect their size.
+    - Can contain other inline elements or text, but cannot contain block-level elements.
+
+    Inline-block elements (e.g., <img>, <button>) are a hybrid of block and inline elements. - They flow horizontally like inline elements but can have width and height properties like block-level elements.
+    - Can have margins, padding, and borders that affect their size and spacing.
+    - Can contain other inline or block-level elements.
+
+*/
+
+/* Flexbox props 
+
+    Flexbox is a one dimensional layout system
+
+    .container {
+        display: flex;
+        flex-direction: row | row-revers | column | column-reverse;
+        flex-wrap: nowrap | wrap | wrap-reverse;
+        flex-flow: Shorthand for flex-direction and flex-wrap;
+        justify-content: flex-start | flext-end | center | space-around | space-evenly | space-between; on the main axis
+        align-items: flex-start | flext-end | baseline | center | stretch; on the cross axis
+    }
+    
+    .item {
+        order: 0; default value, items are laid out in the source order
+        flex-grow: 0; default value, items do not grow to fill the container
+        flex-shrink: 1; default value, items shrink to fit the container
+        flex-basis: auto; default value, the initial size of the item before any growing or shrinking occurs
+        flex: Shorthand for flex-grow, flex-shrink, and flex-basis;
+    }
+*/
+
+/* 
+    Position Properties
+    
+    The `position` property removes elements from normal document flow and controls how they are positioned.
+    
+    Key position values:
+    
+    1. `static` (default)
+        - Element is positioned in normal flow.
+        - top, bottom, left, right, z-index have no effect.
+        - Most elements use this by default.
+    
+    2. `relative`
+        - Element stays in normal flow, but can be offset.
+        - Uses top, bottom, left, right to move relative to its original position.
+        - Space occupied in document flow is preserved (the original position is still "held").
+        - Does not affect sibling or parent elements.
+        - z-index works here.
+        Example: .item { position: relative; top: 10px; left: 20px; }
+    
+    3. `absolute`
+        - Element is removed from normal flow.
+        - Positioned relative to nearest positioned ancestor (position != static).
+        - If no positioned ancestor exists, positions relative to document body.
+        - top, bottom, left, right work based on the positioned ancestor.
+        - Does not take up space; other elements can overlap it.
+        - z-index controls stacking order.
+        - Often paired with a `position: relative` parent to create a positioning context.
+        Example: .container { position: relative; } .child { position: absolute; top: 0; left: 0; }
+    
+    4. `fixed`
+        - Element is removed from normal flow.
+        - Positioned relative to the viewport (browser window).
+        - Stays in place when scrolling.
+        - top, bottom, left, right are relative to viewport edges.
+        - Commonly used for sticky headers, footers, or floating buttons.
+        Example: .header { position: fixed; top: 0; left: 0; right: 0; }
+    
+    5. `sticky`
+        - Hybrid of relative and fixed.
+        - Starts in normal flow (relative behavior) but becomes fixed when scrolled past threshold.
+        - Requires at least one of top, bottom, left, right to define the threshold.
+        - Sticks within its nearest scrolling ancestor (parent with overflow).
+        - Does not remove it from document flow; siblings still account for its space.
+        Example: .nav { position: sticky; top: 0; } (nav sticks to top when scrolled)
+    
+    Related properties (work with position):
+    
+    - `top`, `bottom`, `left`, `right`: Distance from edge of positioning context.
+        Values: can be lengths (px, em, %), negative, or auto.
+        Conflict resolution: if both top and bottom are set, top usually wins.
+    
+    - `z-index`: Controls stacking order (depth) on z-axis.
+        Higher values appear on top. Default is auto (follows source order).
+        Only works on positioned elements (position != static).
+        Stacking context: z-index within a context doesn't compare with other contexts.
+        Example: .modal { position: absolute; z-index: 1000; }
+    
+    Common patterns:
+    
+    - Overlay/modal: .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999; }
+    - Sticky header: .header { position: sticky; top: 0; }
+    - Center absolute element: .item { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    - Positioned container + absolute child:
+        .parent { position: relative; }
+        .child { position: absolute; top: 0; right: 0; }
+    
+    Interview tips:
+    - Explain the difference between relative, absolute, and fixed thoroughly.
+    - Describe what "positioned ancestor" means for absolute positioning.
+    - Know that sticky requires a threshold value (top/bottom/left/right).
+    - Clarify that position: relative preserves document flow space, while absolute and fixed do not.
+    - Understand stacking context and why z-index appears not to work sometimes (nested contexts).
+*/
+
+    
+        
